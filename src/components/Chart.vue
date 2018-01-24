@@ -11,37 +11,8 @@
 
 
 <script>
-  // import Chart from "frappe-charts/dist/frappe-charts.min.esm"
   import * as d3 from 'd3';
-
-// function drawChart(quotes) {
-//   console.warn("ZZZZ HelloWorld.vue", "quotes", quotes)
-//   if (!quotes || quotes.length === 0) {
-//     return;
-//   }
-//
-//   const data = {
-//     labels: quotes[0].data.map(day => day.date.substr(5, day.date.length)),
-//     datasets: quotes.map(quote => ({
-//       title: quote.symbol,
-//       values: quote.data.map(day => day.close),
-//     })),
-//   };
-//   console.warn("ZZZZ HelloWorld.vue", "data", data)
-//
-//   let chart = new Chart({
-//     parent: '#chart', // or a DOM element
-//     title: 'My Awesome Chart',
-//     data: data,
-//     type: 'line', // or 'bar', 'line', 'scatter', 'pie', 'percentage'
-//     height: 250,
-//
-//     colors: ['#7cd6fd', 'violet', 'blue'],
-//
-//     format_tooltip_x: d => (d + '').toUpperCase(),
-//     format_tooltip_y: d => d + ' pts'
-//   });
-// };
+import flatten from 'lodash/flatten';
 
 async function getQuote(symbol) {
   const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart`);
@@ -92,19 +63,12 @@ export default {
 
       console.warn("ZZZZ Chart.vue", `parseTime("2018-01-01")`, parseTime("2018-01-01"))
 
-      var line = d3.line()
-        .x(function(d) {
-          console.warn("ZZZZ Chart.vue", 'parseTime("2018-01-01")', d.date, parseTime(x(d.date)))
-          return x(parseTime(d.date)); })
-        .y(function(d) {
-          console.warn("ZZZZ Chart.vue", "line d.close", d.close, y(d.close))
-          return y(d.close); });
-
-      x.domain(d3.extent(quotes[0].data, function(d) {
+      const allQuoteData = flatten(quotes.map(q => q.data));
+      x.domain(d3.extent(allQuoteData, function(d) {
         console.warn("ZZZZ Chart.vue", "d.date", d.date)
         return parseTime(d.date);
       }))
-      y.domain(d3.extent(quotes[0].data, function(d) {
+      y.domain(d3.extent(allQuoteData, function(d) {
         console.warn("ZZZZ Chart.vue", "d.close", d.close)
         return d.close; }))
 
@@ -124,8 +88,24 @@ export default {
         .attr('text-anchor', 'end')
         .text('Price ($)')
 
+      var line = d3.line()
+        .x(function(d) {
+          console.warn("ZZZZ Chart.vue", 'parseTime("2018-01-01")', d.date, parseTime(x(d.date)))
+          return x(parseTime(d.date)); })
+        .y(function(d) {
+          console.warn("ZZZZ Chart.vue", "line d.close", d.close, y(d.close))
+          return y(d.close); });
+
       g.append('path')
         .datum(quotes[0].data)
+        .attr('fill', 'none')
+        .attr('stroke', 'steelblue')
+        .attr('stroke-linejoin', 'round')
+        .attr('stroke-linecap', 'round')
+        .attr('stroke-width', 1.5)
+        .attr('d', line)
+      g.append('path')
+        .datum(quotes[1].data)
         .attr('fill', 'none')
         .attr('stroke', 'steelblue')
         .attr('stroke-linejoin', 'round')
