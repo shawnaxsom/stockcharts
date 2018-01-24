@@ -2,6 +2,13 @@
 
 > A Vue.js project
 
+## APIs
+
+* https://iextrading.com/developer/docs/#chart
+* https://iextrading.com/developer/docs/#key-stats
+* https://www.alphavantage.co/
+* https://blog.quandl.com/api-for-stock-data
+
 ## Build Setup
 
 ``` bash
