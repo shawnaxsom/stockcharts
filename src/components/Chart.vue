@@ -14,7 +14,7 @@ import flatten from 'lodash/flatten';
 import moment from 'moment';
 
 async function getQuote(symbol) {
-  const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart`);
+  const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/1y`);
   const data = await response.json();
   return {
     symbol: symbol,
@@ -82,10 +82,10 @@ export default {
         const maxDate = new moment(this.quotes[0].data.reduce((max, next) => max && new moment(max.date) > new moment(next.date) ? max : next, null).date).add(-1, "day");
 
         if (d3.event.sourceEvent.deltaY > 0 && this.startDate < maxDate) {
-          this.$set(this, "startDate", this.startDate.add(1, "day"))
+          this.$set(this, "startDate", this.startDate.add(5, "day"))
           this.chartQuotes();
         } else if (d3.event.sourceEvent.deltaY < 0 && this.startDate > minDate) {
-          this.$set(this, "startDate", this.startDate.add(-1, "day"))
+          this.$set(this, "startDate", this.startDate.add(-5, "day"))
           this.chartQuotes();
         }
       }
