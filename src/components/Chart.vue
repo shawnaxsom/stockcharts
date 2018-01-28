@@ -1,8 +1,9 @@
 <template>
   <div>
     <div>
-      <input v-model='symbolsText' v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
+      <input v-model='symbolsText' autofocus v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
       <button v-on:click='chartQuotes'>Get Quote</button>
+      <button v-on:click='showPeers'>Show Peers</button>
     </div>
     <div>
       <svg width='700' height='500' />
@@ -40,6 +41,15 @@ import flatten from 'lodash/flatten';
 import moment from 'moment';
 import debounce from 'lodash/debounce';
 
+async function getPeers(symbol) {
+  const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/peers`);
+  const data = await response.json();
+  return {
+    symbol: symbol,
+    data,
+  };
+};
+
 async function getQuote(symbol) {
   const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/5y`);
   const data = await response.json();
@@ -54,7 +64,11 @@ const colors = [
   "blue",
   "green",
   "purple",
-  "orange"
+  "orange",
+  "black",
+  "gold",
+  "fuscia",
+  "turqoise",
 ]
 
 export default {
@@ -88,6 +102,15 @@ export default {
         symbol,
         color: colors[index],
       }));
+    },
+    showPeers: async function() {
+      const symbol = this.symbolsText.split(",")[0];
+      const peers = await getPeers(symbol);
+      if (peers.data.length > 0) {
+        this.$set(this, "symbolsText", `${symbol},${peers.data.join(",")}`);
+        this.chartQuotes();
+      }
+      return peers;
     },
     chartQuotes: async function() {
       this.symbols = this.symbolsText.split(',');
