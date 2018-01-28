@@ -16,9 +16,12 @@
       Legend
       <ul id="example-2">
         <li v-for="(item, index) in getSymbols()">
-          <span v-bind:style="{ color: item.color  }">
-            {{item.symbol}}
-          </span>
+          <a v-on:click='setBaseline(item.symbol)' style="cursor: pointer">
+            <span v-bind:style="{ color: item.color  }">
+              {{item.symbol}}
+              {{item.symbol === baselineText ? "(baseline)" : ""}}
+            </span>
+          </a>
         </li>
       </ul>
     </div>
@@ -53,6 +56,7 @@ export default {
   name: 'HelloWorld',
   data: () => {
     return {
+      baselineText: "QQQ",
       lastD3Event: null,
       msg: 'Welcome to Your Vue.js App',
       startDate: (new moment()).add(-1, "year"),
@@ -65,6 +69,10 @@ export default {
     this.chartQuotes();
   },
   methods: {
+    setBaseline: function(symbol) {
+      this.baselineText = symbol;
+      this.draw(this.quotes);
+    },
     getSymbols: function() {
       return this.symbolsText.split(',').map((symbol, index) => ({
         symbol,
@@ -81,20 +89,43 @@ export default {
       }
 
       this.quotes = quotes;
+      this.draw(quotes);
+    },
+    mapQuote(quote, i, isBaseline) {
+      const baseline = (!this.baseline || this.baseline.symbol === quote.symbol) ? quote : this.baseline;
 
-      this.draw(this.filterTime(quotes));
+      return {
+        ...quote,
+        data: quote.data.map((d, i) => ({
+          date: d.date,
+          close: d.close,
+          date: d.date,
+          start: quote.data[0].close,
+          baseline: baseline && {
+            close: baseline.data[i].close,
+            start: baseline.data[0].close
+          },
+        }))
+      };
     },
-    filterTime(quotes) {
-      return quotes.map(quote => {
-        return {
-          ...quote,
-          data: quote.data.filter(item => {
-            return new moment(item.date) > this.startDate;
-          })
-        }
-      })
+    mapQuotes(quotes) {
+      return quotes.map(this.mapQuote);
     },
-    draw(quotes) {
+    filterQuote(quote) {
+      return {
+        ...quote,
+        data: quote.data.filter(item => {
+          return new moment(item.date) > this.startDate;
+        })
+      }
+    },
+    filterQuotes(quotes) {
+      return quotes.map(this.filterQuote);
+    },
+    draw: async function(rawQuotes) {
+      this.baseline = this.mapQuote(this.filterQuote(await getQuote(this.baselineText)));
+      const quotes = this.mapQuotes(this.filterQuotes(rawQuotes))
+
       var svg = d3.select('svg');
       var margin = {top: 20, right: 20, bottom: 30, left: 50};
       var width = +svg.attr('width') - margin.left - margin.right;
@@ -112,14 +143,14 @@ export default {
 
           if (this.startDate > minDate) {
             this.$set(this, "startDate", new moment(this.startDate).add(increment * -1, "day"))
-            this.draw(this.filterTime(this.quotes));
+            this.draw(this.quotes);
           }
         } else if (event && event.sourceEvent.deltaY < 0) {
           const maxDate = new moment(this.quotes[0].data.reduce((max, next) => max && new moment(max.date) > new moment(next.date) ? max : next, null).date).add(increment * 2, "day");
 
           if (new moment(this.startDate) < maxDate) {
             this.$set(this, "startDate", new moment(this.startDate).add(increment * -1, "day"))
-            this.draw(this.filterTime(this.quotes));
+            this.draw(this.quotes);
           }
         }
       }
@@ -149,16 +180,22 @@ export default {
       var y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-      const allQuoteData = flatten(quotes.map(q => q.data.map(d => ({
-        close: d.close,
-        date: d.date,
-        start: q.data[0].close,
-      }))));
+      const getAmount = d => {
+        let value = this.quotes.length === 1 ? d.close : d.close / d.start;
+
+        if (d.baseline) {
+          value = value / (d.baseline.close / d.baseline.start)
+        }
+
+        return value;
+      }
+
+      const allQuoteData = flatten(quotes.map (q => q.data));
       x.domain(d3.extent(allQuoteData, function(d) {
         return parseTime(d.date);
       }))
       y.domain(d3.extent(allQuoteData, function(d) {
-        return quotes.length === 1 ? d.close : d.close / d.start;
+        return getAmount(d);
       }))
 
       g.append('g')
@@ -186,7 +223,7 @@ export default {
             return x(parseTime(d.date));
           })
           .y(function(d) {
-            return y(quotes.length === 1 ? d.close : d.close / start);
+            return y(getAmount(d));
           });
 
         g.append('path')
