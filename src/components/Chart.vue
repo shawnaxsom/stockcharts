@@ -9,8 +9,9 @@
 
 
 <script>
-  import * as d3 from 'd3';
+import * as d3 from 'd3';
 import flatten from 'lodash/flatten';
+import moment from 'moment';
 
 async function getQuote(symbol) {
   const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart`);
@@ -26,15 +27,25 @@ export default {
   data: () => {
     return {
       msg: 'Welcome to Your Vue.js App',
+      startDate: new moment("1/20/2018"),
       symbols: 'AAPL,MSFT,SPY',
     }
   },
   mounted: function() {
     this.chartQuotes();
   },
+  beforeMount () {
+    // window.addEventListener('scroll', this.handleScroll);
+  },
+  beforeDestroy () {
+    // window.removeEventListener('scroll', this.handleScroll);
+  },
   methods: {
+    handleScroll: async function(event) {
+      // console.warn("ZZZZ Chart.vue", "foo")
+    },
     chartQuotes: async function() {
-      console.warn('ZZZZ Chart.vue', 'foo', this.symbols)
+      // console.warn('ZZZZ Chart.vue', 'foo', this.symbols)
       const symbols = this.symbols.split(',');
       const quotes = [];
       for (var symbol of symbols) {
@@ -42,9 +53,19 @@ export default {
         quotes.push(quote);
       }
 
-      this.quote = quotes[0];
+      this.quotes = quotes;
 
-      this.draw(quotes);
+      this.draw(this.filterTime(quotes));
+    },
+    filterTime(quotes) {
+      return quotes.map(quote => {
+        return {
+          ...quote,
+          data: quote.data.filter(item => {
+            return new moment(item.date) > this.startDate;
+          })
+        }
+      })
     },
     draw(quotes) {
       var svg = d3.select('svg');
@@ -55,6 +76,25 @@ export default {
         // Redraw
         d3.select('g').remove();
       }
+
+      const onZoom = (a, b, c, d, e, f, g) => {
+        const minDate = new moment(this.quotes[0].data.reduce((min, next) => min && new moment(min.date) < new moment(next.date) ? min : next, null).date);
+        const maxDate = new moment(this.quotes[0].data.reduce((max, next) => max && new moment(max.date) > new moment(next.date) ? max : next, null).date).add(-1, "day");
+
+        if (d3.event.sourceEvent.deltaY > 0 && this.startDate < maxDate) {
+          this.$set(this, "startDate", this.startDate.add(1, "day"))
+          this.chartQuotes();
+        } else if (d3.event.sourceEvent.deltaY < 0 && this.startDate > minDate) {
+          this.$set(this, "startDate", this.startDate.add(-1, "day"))
+          this.chartQuotes();
+        }
+      }
+
+      var zoom = d3.zoom()
+        .on("zoom", onZoom);
+
+      svg.call(zoom);
+
       var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
       var parseTime = d3.timeParse('%Y-%m-%d');
