@@ -56,7 +56,7 @@ export default {
   name: 'HelloWorld',
   data: () => {
     return {
-      baselineText: "QQQ",
+      baselineText: "",
       lastD3Event: null,
       msg: 'Welcome to Your Vue.js App',
       startDate: (new moment()).add(-1, "year"),
@@ -70,7 +70,12 @@ export default {
   },
   methods: {
     setBaseline: function(symbol) {
-      this.baselineText = symbol;
+      if (this.baselineText === symbol) {
+        this.baselineText = "";
+      } else {
+        this.baselineText = symbol;
+      }
+
       this.draw(this.quotes);
     },
     getSymbols: function() {
@@ -101,7 +106,7 @@ export default {
           close: d.close,
           date: d.date,
           start: quote.data[0].close,
-          baseline: baseline && {
+          baseline: this.baselineText && {
             close: baseline.data[i].close,
             start: baseline.data[0].close
           },
@@ -123,7 +128,7 @@ export default {
       return quotes.map(this.filterQuote);
     },
     draw: async function(rawQuotes) {
-      this.baseline = this.mapQuote(this.filterQuote(await getQuote(this.baselineText)));
+      this.baseline = this.baselineText ? this.mapQuote(this.filterQuote(await getQuote(this.baselineText))) : null;
       const quotes = this.mapQuotes(this.filterQuotes(rawQuotes))
 
       var svg = d3.select('svg');
