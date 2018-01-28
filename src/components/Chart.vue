@@ -60,12 +60,17 @@ export default {
       var y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-      const allQuoteData = flatten(quotes.map(q => q.data));
+      const allQuoteData = flatten(quotes.map(q => q.data.map(d => ({
+        close: d.close,
+        date: d.date,
+        start: q.data[0].close,
+      }))));
       x.domain(d3.extent(allQuoteData, function(d) {
         return parseTime(d.date);
       }))
       y.domain(d3.extent(allQuoteData, function(d) {
-        return d.close; }))
+        return d.close / d.start;
+      }))
 
       g.append('g')
         .attr('transform', 'translate(0,' + height + ')')
@@ -83,37 +88,33 @@ export default {
         .attr('text-anchor', 'end')
         .text('Price ($)')
 
-      const diff = (quotes[0].data[0].close - quotes[1].data[0].close) / 2;
-      console.warn("ZZZZ Chart.vue", "diff", diff, )
-      var line = d3.line()
-        .x(function(d) {
-          return x(parseTime(d.date)); })
-        .y(function(d) {
-          return y(d.close - diff); });
+      const diff = quotes[0].data[0].close - quotes[1].data[0].close;
+      // console.warn("ZZZZ Chart.vue", "diff", diff, )
 
-      var line2 = d3.line()
-        .x(function(d) {
-          return x(parseTime(d.date)); })
-        .y(function(d) {
-          return y(d.close + diff); });
+      const drawLine = data => {
+        // const max = data.reduce((largest, next) => largest.close > next.close ? largest : next, 0).close;
+        const start = data[0].close;
 
-      g.append('path')
-        .datum(quotes[0].data)
-        .attr('fill', 'none')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-linejoin', 'round')
-        .attr('stroke-linecap', 'round')
-        .attr('stroke-width', 1.5)
-        .attr('d', line)
+        var line = d3.line()
+          .x(function(d) {
+            return x(parseTime(d.date));
+          })
+          .y(function(d) {
+            return y(d.close / start);
+          });
 
-      g.append('path')
-        .datum(quotes[1].data)
-        .attr('fill', 'none')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-linejoin', 'round')
-        .attr('stroke-linecap', 'round')
-        .attr('stroke-width', 1.5)
-        .attr('d', line2)
+        g.append('path')
+          .datum(data)
+          .attr('fill', 'none')
+          .attr('stroke', 'steelblue')
+          .attr('stroke-linejoin', 'round')
+          .attr('stroke-linecap', 'round')
+          .attr('stroke-width', 1.5)
+          .attr('d', line);
+      }
+
+      drawLine(quotes[0].data)
+      drawLine(quotes[1].data)
     }
   }
 }
