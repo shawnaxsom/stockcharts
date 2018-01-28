@@ -24,6 +24,11 @@
           </a>
         </li>
       </ul>
+      <a v-on:click='setBaseline(baselineText)' style="cursor: pointer">
+        <span>
+          Baseline: {{baselineText}}
+        </span>
+      </a>
     </div>
   </div>
 </template>
@@ -36,7 +41,7 @@ import moment from 'moment';
 import debounce from 'lodash/debounce';
 
 async function getQuote(symbol) {
-  const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/2y`);
+  const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/5y`);
   const data = await response.json();
   return {
     symbol: symbol,
