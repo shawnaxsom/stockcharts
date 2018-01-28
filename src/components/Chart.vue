@@ -55,7 +55,7 @@ export default {
     return {
       lastD3Event: null,
       msg: 'Welcome to Your Vue.js App',
-      startDate: (new moment()).add(-1, "month"),
+      startDate: (new moment()).add(-1, "year"),
       endDate: (new moment()),
       symbols: ['SPY', 'DIA', 'QQQ'],
       symbolsText: 'SPY,DIA,QQQ',
@@ -158,7 +158,7 @@ export default {
         return parseTime(d.date);
       }))
       y.domain(d3.extent(allQuoteData, function(d) {
-        return d.close / d.start;
+        return quotes.length === 1 ? d.close : d.close / d.start;
       }))
 
       g.append('g')
@@ -175,7 +175,7 @@ export default {
         .attr('y', 6)
         .attr('dy', '0.71em')
         .attr('text-anchor', 'end')
-        .text('Percent (increase/decrease)')
+        .text(quotes.length === 1 ? 'Price ($)' : 'Percent (increase/decrease)')
 
       const drawLine = (data, i) => {
         // const max = data.reduce((largest, next) => largest.close > next.close ? largest : next, 0).close;
@@ -186,7 +186,7 @@ export default {
             return x(parseTime(d.date));
           })
           .y(function(d) {
-            return y(d.close / start);
+            return y(quotes.length === 1 ? d.close : d.close / start);
           });
 
         g.append('path')
