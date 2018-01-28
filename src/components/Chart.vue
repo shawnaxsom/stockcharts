@@ -1,11 +1,26 @@
 <template>
   <div>
     <div>
-      <input v-model='symbols' v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
+      <input v-model='symbolsText' v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
       <button v-on:click='chartQuotes'>Get Quote</button>
     </div>
     <div>
       <svg width='700' height='500' />
+    </div>
+    <div>
+      {{startDate.format('M/D/Y')}}
+      -
+      {{endDate.format('M/D/Y')}}
+    </div>
+    <div class="legend">
+      Legend
+      <ul id="example-2">
+        <li v-for="(item, index) in getSymbols()">
+          <span v-bind:style="{ color: item.color  }">
+            {{item.symbol}}
+          </span>
+        </li>
+      </ul>
     </div>
   </div>
 </template>
@@ -18,7 +33,7 @@ import moment from 'moment';
 import debounce from 'lodash/debounce';
 
 async function getQuote(symbol) {
-  const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/1y`);
+  const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/2y`);
   const data = await response.json();
   return {
     symbol: symbol,
@@ -30,7 +45,7 @@ const colors = [
   "red",
   "blue",
   "green",
-  "yellow",
+  "purple",
   "orange"
 ]
 
@@ -41,17 +56,27 @@ export default {
       lastD3Event: null,
       msg: 'Welcome to Your Vue.js App',
       startDate: (new moment()).add(-1, "month"),
-      symbols: 'AAPL,MSFT,SPY',
+      endDate: (new moment()),
+      symbols: ['AAPL', 'MSFT', 'SPY'],
+      symbolsText: 'AAPL,MSFT,SPY',
     }
   },
   mounted: function() {
     this.chartQuotes();
   },
   methods: {
+    getSymbols: function() {
+      return this.symbolsText.split(',').map((symbol, index) => ({
+        symbol,
+        color: colors[index],
+      }));
+    },
     chartQuotes: async function() {
-      const symbols = this.symbols.split(',');
+      console.warn("ZZZZ Chart.vue", "this.symbolsText", this.symbolsText)
+      this.symbols = this.symbolsText.split(',');
+
       const quotes = [];
-      for (var symbol of symbols) {
+      for (var symbol of this.symbols) {
         const quote = await getQuote(symbol);
         quotes.push(quote);
       }
@@ -81,6 +106,7 @@ export default {
       }
 
       const doZoom = () => {
+        console.warn("ZZZZ Chart.vue", "this.startDate", this.startDate.toDate())
 
         const event = d3.event || this.lastD3Event;
         const increment = event.sourceEvent.deltaY;
@@ -88,14 +114,14 @@ export default {
           const minDate = new moment(this.quotes[0].data.reduce((min, next) => min && new moment(min.date) < new moment(next.date) ? min : next, null).date);
 
           if (this.startDate > minDate) {
-            this.$set(this, "startDate", this.startDate.add(increment * -1, "day"))
+            this.$set(this, "startDate", new moment(this.startDate).add(increment * -1, "day"))
             this.draw(this.filterTime(this.quotes));
           }
         } else if (event && event.sourceEvent.deltaY < 0) {
           const maxDate = new moment(this.quotes[0].data.reduce((max, next) => max && new moment(max.date) > new moment(next.date) ? max : next, null).date).add(increment * 2, "day");
 
           if (new moment(this.startDate) < maxDate) {
-            this.$set(this, "startDate", this.startDate.add(increment * -1, "day"))
+            this.$set(this, "startDate", new moment(this.startDate).add(increment * -1, "day"))
             this.draw(this.filterTime(this.quotes));
           }
         }
@@ -152,7 +178,7 @@ export default {
         .attr('y', 6)
         .attr('dy', '0.71em')
         .attr('text-anchor', 'end')
-        .text('Price ($)')
+        .text('Percent (increase/decrease)')
 
       const drawLine = (data, i) => {
         // const max = data.reduce((largest, next) => largest.close > next.close ? largest : next, 0).close;
@@ -197,5 +223,10 @@ li {
 }
 a {
   color: #42b983;
+}
+
+.legend {
+  color: steelblue;
+    margin: 24px;
 }
 </style>
