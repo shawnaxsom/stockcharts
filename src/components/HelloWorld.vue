@@ -13,7 +13,6 @@
 import Chart from "frappe-charts/dist/frappe-charts.min.esm"
 
 function drawChart(quotes) {
-  console.warn("ZZZZ HelloWorld.vue", "quotes", quotes)
   if (!quotes || quotes.length === 0) {
     return;
   }
@@ -25,7 +24,6 @@ function drawChart(quotes) {
       values: quote.data.map(day => day.close),
     })),
   };
-  console.warn("ZZZZ HelloWorld.vue", "data", data)
 
   let chart = new Chart({
     parent: '#chart', // or a DOM element

@@ -57,8 +57,8 @@ export default {
       msg: 'Welcome to Your Vue.js App',
       startDate: (new moment()).add(-1, "month"),
       endDate: (new moment()),
-      symbols: ['AAPL', 'MSFT', 'SPY'],
-      symbolsText: 'AAPL,MSFT,SPY',
+      symbols: ['SPY', 'DIA', 'QQQ'],
+      symbolsText: 'SPY,DIA,QQQ',
     }
   },
   mounted: function() {
@@ -72,7 +72,6 @@ export default {
       }));
     },
     chartQuotes: async function() {
-      console.warn("ZZZZ Chart.vue", "this.symbolsText", this.symbolsText)
       this.symbols = this.symbolsText.split(',');
 
       const quotes = [];
@@ -106,8 +105,6 @@ export default {
       }
 
       const doZoom = () => {
-        console.warn("ZZZZ Chart.vue", "this.startDate", this.startDate.toDate())
-
         const event = d3.event || this.lastD3Event;
         const increment = event.sourceEvent.deltaY;
         if (event && event.sourceEvent.deltaY > 0) {
