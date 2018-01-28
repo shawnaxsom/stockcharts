@@ -1,9 +1,12 @@
 <template>
   <div>
-    <input v-model='symbols' v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
-    <button v-on:click='chartQuotes'>Get Quote</button>
-    <svg width='700' height='500'>
-    </svg>
+    <div>
+      <input v-model='symbols' v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
+      <button v-on:click='chartQuotes'>Get Quote</button>
+    </div>
+    <div>
+      <svg width='700' height='500' />
+    </div>
   </div>
 </template>
 
@@ -12,6 +15,7 @@
 import * as d3 from 'd3';
 import flatten from 'lodash/flatten';
 import moment from 'moment';
+import debounce from 'lodash/debounce';
 
 async function getQuote(symbol) {
   const response = await fetch(`https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/1y`);
@@ -22,30 +26,29 @@ async function getQuote(symbol) {
   };
 };
 
+const colors = [
+  "red",
+  "blue",
+  "green",
+  "yellow",
+  "orange"
+]
+
 export default {
   name: 'HelloWorld',
   data: () => {
     return {
+      lastD3Event: null,
       msg: 'Welcome to Your Vue.js App',
-      startDate: new moment("1/20/2018"),
+      startDate: (new moment()).add(-1, "month"),
       symbols: 'AAPL,MSFT,SPY',
     }
   },
   mounted: function() {
     this.chartQuotes();
   },
-  beforeMount () {
-    // window.addEventListener('scroll', this.handleScroll);
-  },
-  beforeDestroy () {
-    // window.removeEventListener('scroll', this.handleScroll);
-  },
   methods: {
-    handleScroll: async function(event) {
-      // console.warn("ZZZZ Chart.vue", "foo")
-    },
     chartQuotes: async function() {
-      // console.warn('ZZZZ Chart.vue', 'foo', this.symbols)
       const symbols = this.symbols.split(',');
       const quotes = [];
       for (var symbol of symbols) {
@@ -77,21 +80,39 @@ export default {
         d3.select('g').remove();
       }
 
-      const onZoom = (a, b, c, d, e, f, g) => {
-        const minDate = new moment(this.quotes[0].data.reduce((min, next) => min && new moment(min.date) < new moment(next.date) ? min : next, null).date);
-        const maxDate = new moment(this.quotes[0].data.reduce((max, next) => max && new moment(max.date) > new moment(next.date) ? max : next, null).date).add(-1, "day");
+      const doZoom = () => {
 
-        if (d3.event.sourceEvent.deltaY > 0 && this.startDate < maxDate) {
-          this.$set(this, "startDate", this.startDate.add(5, "day"))
-          this.chartQuotes();
-        } else if (d3.event.sourceEvent.deltaY < 0 && this.startDate > minDate) {
-          this.$set(this, "startDate", this.startDate.add(-5, "day"))
-          this.chartQuotes();
+        const event = d3.event || this.lastD3Event;
+        const increment = event.sourceEvent.deltaY;
+        if (event && event.sourceEvent.deltaY > 0) {
+          const minDate = new moment(this.quotes[0].data.reduce((min, next) => min && new moment(min.date) < new moment(next.date) ? min : next, null).date);
+
+          if (this.startDate > minDate) {
+            this.$set(this, "startDate", this.startDate.add(increment * -1, "day"))
+            this.draw(this.filterTime(this.quotes));
+          }
+        } else if (event && event.sourceEvent.deltaY < 0) {
+          const maxDate = new moment(this.quotes[0].data.reduce((max, next) => max && new moment(max.date) > new moment(next.date) ? max : next, null).date).add(increment * 2, "day");
+
+          if (new moment(this.startDate) < maxDate) {
+            this.$set(this, "startDate", this.startDate.add(increment * -1, "day"))
+            this.draw(this.filterTime(this.quotes));
+          }
         }
       }
+      const debounced = debounce(doZoom, 10, { 'maxWait': 30 });
+      const saveEvent = () => {
+        this.lastD3Event = d3.event;
+      }
+      const handleZoomEvent = () => {
+        saveEvent();
+        // debounced();
+        doZoom();
+      }
+
 
       var zoom = d3.zoom()
-        .on("zoom", onZoom);
+        .on("zoom", handleZoomEvent);
 
       svg.call(zoom);
 
@@ -133,7 +154,7 @@ export default {
         .attr('text-anchor', 'end')
         .text('Price ($)')
 
-      const drawLine = data => {
+      const drawLine = (data, i) => {
         // const max = data.reduce((largest, next) => largest.close > next.close ? largest : next, 0).close;
         const start = data[0].close;
 
@@ -148,14 +169,14 @@ export default {
         g.append('path')
           .datum(data)
           .attr('fill', 'none')
-          .attr('stroke', 'steelblue')
+          .attr('stroke', colors[i])
           .attr('stroke-linejoin', 'round')
           .attr('stroke-linecap', 'round')
           .attr('stroke-width', 1.5)
           .attr('d', line);
       }
 
-      quotes.forEach(quote => drawLine(quote.data))
+      quotes.forEach((quote, i) => drawLine(quote.data, i))
     }
   }
 }
