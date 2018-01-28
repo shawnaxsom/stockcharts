@@ -1,11 +1,9 @@
 <template>
   <div>
-    <svg width='500' height='270'>
-      <g style='transform: translate(0, 10px)'>
-        <path :d='line' />
-      </g>
-    </svg>
+    <input v-model='symbols' v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
     <button v-on:click='chartQuotes'>Get Quote</button>
+    <svg width='700' height='500'>
+    </svg>
   </div>
 </template>
 
@@ -28,7 +26,7 @@ export default {
   data: () => {
     return {
       msg: 'Welcome to Your Vue.js App',
-      quote: 'before',
+      symbols: 'AAPL,MSFT,SPY',
     }
   },
   mounted: function() {
@@ -36,21 +34,28 @@ export default {
   },
   methods: {
     chartQuotes: async function() {
-      const quotes = [
-        await getQuote("AAPL"),
-        await getQuote("MSFT"),
-      ]
+      console.warn('ZZZZ Chart.vue', 'foo', this.symbols)
+      const symbols = this.symbols.split(',');
+      const quotes = [];
+      for (var symbol of symbols) {
+        const quote = await getQuote(symbol);
+        quotes.push(quote);
+      }
 
       this.quote = quotes[0];
 
       this.draw(quotes);
     },
     draw(quotes) {
-      var svg = d3.select('svg'),
-        margin = {top: 20, right: 20, bottom: 30, left: 50},
-        width = +svg.attr('width') - margin.left - margin.right,
-        height = +svg.attr('height') - margin.top - margin.bottom,
-        g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+      var svg = d3.select('svg');
+      var margin = {top: 20, right: 20, bottom: 30, left: 50};
+      var width = +svg.attr('width') - margin.left - margin.right;
+      var height = +svg.attr('height') - margin.top - margin.bottom;
+      if (svg.nodes()[0].children.length) {
+        // Redraw
+        d3.select('g').remove();
+      }
+      var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
       var parseTime = d3.timeParse('%Y-%m-%d');
 
@@ -88,9 +93,6 @@ export default {
         .attr('text-anchor', 'end')
         .text('Price ($)')
 
-      const diff = quotes[0].data[0].close - quotes[1].data[0].close;
-      // console.warn("ZZZZ Chart.vue", "diff", diff, )
-
       const drawLine = data => {
         // const max = data.reduce((largest, next) => largest.close > next.close ? largest : next, 0).close;
         const start = data[0].close;
@@ -113,8 +115,7 @@ export default {
           .attr('d', line);
       }
 
-      drawLine(quotes[0].data)
-      drawLine(quotes[1].data)
+      quotes.forEach(quote => drawLine(quote.data))
     }
   }
 }
