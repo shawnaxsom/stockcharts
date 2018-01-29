@@ -5,8 +5,8 @@
       <button v-on:click='chartQuotes'>Get Quote</button>
       <button v-on:click='showPeers'>Show Peers</button>
     </div>
-    <div>
-      <svg width='700' height='500' />
+    <div class="svg-container">
+      <svg width="700" height="500" />
     </div>
     <div>
       {{startDate.format('M/D/Y')}}
@@ -86,6 +86,15 @@ export default {
   },
   mounted: function() {
     this.chartQuotes();
+    d3.select(window)
+      .on("resize", (function() {
+        var svgContainer = d3.select('.svg-container');
+        var svg = d3.select('svg');
+        var container = svgContainer.node().getBoundingClientRect();
+        svg.attr("width", container.width);
+        svg.attr("height", container.height);
+        this.draw(this.quotes);
+      }).bind(this));
   },
   methods: {
     setBaseline: function(symbol) {
@@ -159,10 +168,16 @@ export default {
       this.baseline = this.baselineText ? this.mapQuote(this.filterQuote(await getQuote(this.baselineText))) : null;
       const quotes = this.mapQuotes(this.filterQuotes(rawQuotes))
 
+      var svgContainer = d3.select('.svg-container');
       var svg = d3.select('svg');
+      const container = svgContainer.node().getBoundingClientRect();
       var margin = {top: 20, right: 20, bottom: 30, left: 50};
-      var width = +svg.attr('width') - margin.left - margin.right;
-      var height = +svg.attr('height') - margin.top - margin.bottom;
+
+      svg.attr("width", container.width);
+      svg.attr("height", container.height);
+      var width = container.width - margin.left - margin.right;
+      var height = container.height - margin.top - margin.bottom;
+
       if (svg.nodes()[0].children.length) {
         // Redraw
         d3.select('g').remove();
@@ -295,5 +310,12 @@ a {
 .legend {
   color: steelblue;
     margin: 24px;
+}
+
+.svg-container {
+  width: 80%;
+  max-width: 1000px;
+  height: 60vh;
+  margin: auto;
 }
 </style>
