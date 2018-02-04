@@ -1,9 +1,9 @@
 <template>
   <div>
     <div>
-      <input v-model='symbolsText' autofocus v-on:keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
-      <button v-on:click='chartQuotes'>Get Quote</button>
-      <button v-on:click='showPeers'>Show Peers</button>
+      <input :value='symbolsText' autofocus @keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
+      <button @click='chartQuotes'>Get Quote</button>
+      <button @click='showPeers'>Show Peers</button>
     </div>
     <div class="svg-container">
       <svg width="700" height="500" />
@@ -17,15 +17,15 @@
       Legend
       <ul id="example-2">
         <li v-for="(item, index) in getSymbols()">
-          <a v-on:click='setBaseline(item.symbol)' style="cursor: pointer">
-            <span v-bind:style="{ color: item.color  }">
+          <a @click='setBaseline(item.symbol)' style="cursor: pointer">
+            <span :style="{ color: item.color  }">
               {{item.symbol}}
               {{item.symbol === baselineText ? "(baseline)" : ""}}
             </span>
           </a>
         </li>
       </ul>
-      <a v-on:click='setBaseline(baselineText)' style="cursor: pointer">
+      <a gclick='setBaseline(baselineText)' style="cursor: pointer">
         <span>
           Baseline: {{baselineText}}
         </span>
@@ -35,7 +35,7 @@
 </template>
 
 
-<script>
+<script lang="ts">
 import * as d3 from 'd3';
 import flatten from 'lodash/flatten';
 import moment from 'moment';
@@ -71,15 +71,25 @@ const colors = [
   "turqoise",
 ]
 
+interface BaseData {
+  baselineText: string,
+  lastD3Event: Object,
+  msg: string,
+  startDate: Object,
+  endDate: Object, // TODO: Moment.js bindings?
+  symbols: Array<string>,
+  symbolsText: string,
+}
+
 export default {
   name: 'HelloWorld',
-  data: () => {
+  data: (): BaseData => {
     return {
       baselineText: "",
       lastD3Event: null,
       msg: 'Welcome to Your Vue.js App',
-      startDate: (new moment()).add(-1, "year"),
-      endDate: (new moment()),
+      startDate: (moment()).add(-1, "year"),
+      endDate: (moment()),
       symbols: ['SPY', 'DIA', 'QQQ'],
       symbolsText: 'SPY,DIA,QQQ',
     }
@@ -139,7 +149,6 @@ export default {
       return {
         ...quote,
         data: quote.data.map((d, i) => ({
-          date: d.date,
           close: d.close,
           date: d.date,
           start: quote.data[0].close,
@@ -157,7 +166,7 @@ export default {
       return {
         ...quote,
         data: quote.data.filter(item => {
-          return new moment(item.date) > this.startDate;
+          return moment(item.date) > this.startDate;
         })
       }
     },
@@ -187,17 +196,17 @@ export default {
         const event = d3.event || this.lastD3Event;
         const increment = event.sourceEvent.deltaY;
         if (event && event.sourceEvent.deltaY > 0) {
-          const minDate = new moment(this.quotes[0].data.reduce((min, next) => min && new moment(min.date) < new moment(next.date) ? min : next, null).date);
+          const minDate = moment(this.quotes[0].data.reduce((min, next) => min && moment(min.date) < moment(next.date) ? min : next, null).date);
 
           if (this.startDate > minDate) {
-            this.$set(this, "startDate", new moment(this.startDate).add(increment * -1, "day"))
+            this.$set(this, "startDate", moment(this.startDate).add(increment * -1, "day"))
             this.draw(this.quotes);
           }
         } else if (event && event.sourceEvent.deltaY < 0) {
-          const maxDate = new moment(this.quotes[0].data.reduce((max, next) => max && new moment(max.date) > new moment(next.date) ? max : next, null).date).add(increment * 2, "day");
+          const maxDate = moment(this.quotes[0].data.reduce((max, next) => max && moment(max.date) > moment(next.date) ? max : next, null).date).add(increment * 2, "day");
 
-          if (new moment(this.startDate) < maxDate) {
-            this.$set(this, "startDate", new moment(this.startDate).add(increment * -1, "day"))
+          if (moment(this.startDate) < maxDate) {
+            this.$set(this, "startDate", moment(this.startDate).add(increment * -1, "day"))
             this.draw(this.quotes);
           }
         }

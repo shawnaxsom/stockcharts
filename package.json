@@ -19,6 +19,8 @@
     "d3-zoom": "^1.7.1",
     "lodash": "^4.17.4",
     "moment": "^2.20.1",
+    "ts-loader": "^3.4.0",
+    "typescript": "^2.7.1",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
   },
