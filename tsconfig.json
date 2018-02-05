@@ -1,4 +1,4 @@
- {
+{
   "compilerOptions": {
     "lib": ["dom", "es5", "es2015"],
     "target": "es5",
@@ -6,9 +6,8 @@
     "moduleResolution": "node",
     "noImplicitReturns": true,
     "sourceMap": true,
+    "strict": false,
     "allowSyntheticDefaultImports": true
   },
-  "include": [
-    "./src/**/*"
-  ]
+  "include": ["./src/**/*"]
 }
