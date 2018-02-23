@@ -1,0 +1,6 @@
+graphene
+graphene-django
+django
+django_graphiql
+graphql-core
+requests

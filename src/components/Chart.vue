@@ -1,7 +1,7 @@
 <template>
   <div>
     <div>
-      <input :value='symbolsText' autofocus @keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
+      <input v-model='symbolsText' autofocus @keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
       <button @click='chartQuotes'>Get Quote</button>
       <button @click='showPeers'>Show Peers</button>
     </div>
@@ -43,11 +43,34 @@ import moment from "moment";
 import debounce from "lodash/debounce";
 import {randomLogNormal} from "d3";
 
+function postData(url: string, options: {body: object}) {
+  // Default options are marked with *
+  return fetch(url, {
+    body: JSON.stringify(options.body), // must match 'Content-Type' header
+    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+    credentials: 'same-origin', // include, *omit
+    headers: {
+      'content-type': 'application/json'
+    },
+    method: 'POST', // *GET, PUT, DELETE, etc.
+    mode: 'cors', // no-cors, *same-origin
+    redirect: 'follow', // *manual, error
+    referrer: 'no-referrer', // *client
+  })
+  .then(response => response.json()) // parses response to JSON
+}
+
+function query(query: string) {
+  return postData('http://localhost:8000/graphql?', {
+    body: {
+      query,
+    },
+  });
+}
+
 async function getPeers(symbol: string) {
-  const response = await fetch(
-    `https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/peers`,
-  );
-  const data = await response.json();
+  const response = await query(`{ peers(symbol: "${symbol}") }`);
+  const data = JSON.parse(response.data.peers.replace(/'/g, '"'));
   return {
     symbol: symbol,
     data,
@@ -142,8 +165,10 @@ export default Vue.extend({
       quotes: [],
       startDate: moment().add(-1, "year"),
       endDate: moment(),
-      symbols: ["SPY", "DIA", "QQQ"],
-      symbolsText: "SPY,DIA,QQQ",
+      // symbols: ["SPY", "DIA", "QQQ"],
+      // symbolsText: "SPY,DIA,QQQ",
+      symbols: ["MSFT"],
+      symbolsText: "MSFT",
     };
   },
   mounted: function() {
