@@ -2,13 +2,6 @@
 
 > A Vue.js project
 
-## APIs
-
-* https://iextrading.com/developer/docs/#chart
-* https://iextrading.com/developer/docs/#key-stats
-* https://www.alphavantage.co/
-* https://blog.quandl.com/api-for-stock-data
-
 ## Build Setup
 
 ``` bash
@@ -34,4 +27,31 @@ npm run e2e
 npm test
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+## GraphQL API
+
+``` bash
+# virtualenv of fish shell
+vf new stockcharts
+vf activate stockcharts
+
+# start django, with GraphQL module
+manage.py runserver
+
+# Endpoint with GraphiQL running on it
+open http://127.0.0.1:8000/graphql
+
+{
+  peers(symbol: "msft")
+}
+```
+
+
+
+### 3rd party APIs
+
+* https://iextrading.com/developer/docs/#chart
+* https://iextrading.com/developer/docs/#key-stats
+* https://www.alphavantage.co/
+* https://blog.quandl.com/api-for-stock-data
+
