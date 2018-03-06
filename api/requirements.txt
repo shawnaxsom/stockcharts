@@ -1,0 +1,4 @@
+graphene
+graphql-core
+requests
+aws-xray-sdk
