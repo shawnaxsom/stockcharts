@@ -27,19 +27,13 @@ class Query(graphene.ObjectType):
 def handler(event, context):
     schema = graphene.Schema(query=Query)
 
-    print(event)
-
-    query = '''
-    {
-        peers(symbol: "msft")
-    }'''
+    query = event['body']
 
     result = schema.execute(query)
 
     response = {
         "statusCode": 200,
-        # "body": json.dumps(result.data['peers'])
-        "body": json.dumps(event)
+        "body": json.dumps(result.data)
     }
 
     return response
