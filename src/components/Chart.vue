@@ -42,56 +42,14 @@ import flatten from "lodash/flatten";
 import moment from "moment";
 import debounce from "lodash/debounce";
 import {randomLogNormal} from "d3";
+import {getPeers, getQuote} from "../services/graphql";
 
-function postData(url: string, options: {body: string}) {
-  // Default options are marked with *
-  console.warn("ZZZZ Chart.vue", "query with body", options.body);
-  return fetch(url, {
-    body: options.body, // must match 'Content-Type' header
-    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-    credentials: 'same-origin', // include, *omit
-    headers: {
-      'content-type': 'application/json'
-    },
-    method: 'POST', // *GET, PUT, DELETE, etc.
-    mode: 'cors', // no-cors, *same-origin
-    redirect: 'follow', // *manual, error
-    referrer: 'no-referrer', // *client
-  })
-  .then(response => {
-    console.warn("ZZZZ Chart.vue", "response", response);
-    return response.json()
-  }) // parses response to JSON
-}
-
-function query(query: string) {
-  return postData('https://4v2cyqgx10.execute-api.us-east-1.amazonaws.com/dev/', {
-    body: query,
-  });
-}
-
-async function getPeers(symbol: string) {
-  const response = await query(`{ peers(symbol: "${symbol}") }`);
-  const data = JSON.parse(response.peers.replace(/'/g, '"'));
-  return {
-    symbol: symbol,
-    data,
-  };
-}
-
-async function getQuote(symbol: string): Promise<Quote> {
-  console.warn("ZZZZ Chart.vue", "foo0");
-  const response = await query(`{ chart(symbol: "${symbol}", timespan: "5y") }`);
-  // const data: ApiData[] = await response.json();
-  console.warn("ZZZZ Chart.vue", "foo1", response);
-  const data = JSON.parse(response.chart.replace(/'/g, '"'));
-  console.warn("ZZZZ Chart.vue", "foo2", data);
-
-  return {
-    symbol: symbol,
-    data,
-  };
-}
+import ApiData from "../interfaces/ApiData";
+import ApiQuote from "../interfaces/ApiQuote";
+import BaseData from "../interfaces/BaseData";
+import ChartVue from "../interfaces/ChartVue";
+import Quote from "../interfaces/Quote";
+import QuoteData from "../interfaces/QuoteData";
 
 const colors = [
   "red",
@@ -104,59 +62,6 @@ const colors = [
   "fuscia",
   "turqoise",
 ];
-
-interface BaseData {
-  baselineText: string;
-  baseline: Quote | null | undefined;
-  endDate: Object; // TODO: Moment.js bindings?
-  lastD3Event: Object | null;
-  msg: string;
-  quotes: Quote[];
-  startDate: Object;
-  symbols: Array<string>;
-  symbolsText: string;
-}
-
-interface ApiData {
-  change: string;
-  changeOverTime: number;
-  changePercent: number;
-  close: number;
-  date: string;
-  high: number;
-  label: string;
-  low: number;
-  open: number;
-  unadjustedVolume: number;
-  volume: number;
-  vwap: number;
-}
-
-interface ApiQuote {
-  symbol: string;
-  data: ApiData[];
-}
-
-interface Quote {
-  symbol: string;
-  data: ApiData[];
-}
-
-interface QuoteData extends ApiData {
-  baseline:
-    | {
-        close: number;
-        closeAtStartDate: number;
-      }
-    | undefined
-    | null;
-  closeAtStartDate: number;
-}
-
-interface ChartVue {
-  quotes: Quote[];
-  draw: (quotes: Quote[]) => {};
-}
 
 export default Vue.extend({
   name: "HelloWorld",
