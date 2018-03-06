@@ -30,3 +30,4 @@ functions:
           # since we just have one endpoint I used /
           path: /
           method: post
+          cors: true

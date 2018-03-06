@@ -43,10 +43,11 @@ import moment from "moment";
 import debounce from "lodash/debounce";
 import {randomLogNormal} from "d3";
 
-function postData(url: string, options: {body: object}) {
+function postData(url: string, options: {body: string}) {
   // Default options are marked with *
+  console.warn("ZZZZ Chart.vue", "query with body", options.body);
   return fetch(url, {
-    body: JSON.stringify(options.body), // must match 'Content-Type' header
+    body: options.body, // must match 'Content-Type' header
     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
     credentials: 'same-origin', // include, *omit
     headers: {
@@ -57,20 +58,21 @@ function postData(url: string, options: {body: object}) {
     redirect: 'follow', // *manual, error
     referrer: 'no-referrer', // *client
   })
-  .then(response => response.json()) // parses response to JSON
+  .then(response => {
+    console.warn("ZZZZ Chart.vue", "response", response);
+    return response.json()
+  }) // parses response to JSON
 }
 
 function query(query: string) {
-  return postData('http://localhost:8000/graphql?', {
-    body: {
-      query,
-    },
+  return postData('https://4v2cyqgx10.execute-api.us-east-1.amazonaws.com/dev/', {
+    body: query,
   });
 }
 
 async function getPeers(symbol: string) {
   const response = await query(`{ peers(symbol: "${symbol}") }`);
-  const data = JSON.parse(response.data.peers.replace(/'/g, '"'));
+  const data = JSON.parse(response.peers.replace(/'/g, '"'));
   return {
     symbol: symbol,
     data,
@@ -78,10 +80,12 @@ async function getPeers(symbol: string) {
 }
 
 async function getQuote(symbol: string): Promise<Quote> {
-  const response = await fetch(
-    `https://api.iextrading.com/1.0/stock/${symbol.toLowerCase()}/chart/5y`,
-  );
-  const data: ApiData[] = await response.json();
+  console.warn("ZZZZ Chart.vue", "foo0");
+  const response = await query(`{ chart(symbol: "${symbol}", timespan: "5y") }`);
+  // const data: ApiData[] = await response.json();
+  console.warn("ZZZZ Chart.vue", "foo1", response);
+  const data = JSON.parse(response.chart.replace(/'/g, '"'));
+  console.warn("ZZZZ Chart.vue", "foo2", data);
 
   return {
     symbol: symbol,
