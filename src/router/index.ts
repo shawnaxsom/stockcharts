@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Chart from '@/components/Chart'
+import Home from '@/components/Home'
 
 Vue.use(Router)
 
@@ -8,8 +8,8 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'Chart',
-      component: Chart,
+      name: 'Home',
+      component: Home,
     },
   ]
 })

@@ -5,7 +5,6 @@ export default interface BaseData {
   baseline: Quote | null | undefined;
   endDate: Object; // TODO: Moment.js bindings?
   lastD3Event: Object | null;
-  msg: string;
   quotes: Quote[];
   startDate: Object;
   symbols: Array<string>;

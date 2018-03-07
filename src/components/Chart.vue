@@ -1,9 +1,9 @@
 <template>
   <div>
     <div>
-      <input v-model='symbolsText' autofocus @keyup.enter='chartQuotes' placeholder='AAPL,MSFT,SPY'>
-      <button @click='chartQuotes'>Get Quote</button>
-      <button @click='showPeers'>Show Peers</button>
+      <text-field v-model='symbolsText' autofocus :onKeyUp='chartQuotes' placeholder='AAPL,MSFT,SPY' />
+      <primary-button :onClick='chartQuotes'>Get Quote</primary-button>
+      <secondary-button :onClick='showPeers'>Show Peers</secondary-button>
     </div>
     <div class="svg-container">
       <svg width="700" height="500" />
@@ -50,6 +50,9 @@ import BaseData from "../interfaces/BaseData";
 import ChartVue from "../interfaces/ChartVue";
 import Quote from "../interfaces/Quote";
 import QuoteData from "../interfaces/QuoteData";
+import PrimaryButton from "@/components/PrimaryButton";
+import SecondaryButton from "@/components/SecondaryButton";
+import TextField from "@/components/TextField";
 
 const colors = [
   "red",
@@ -64,13 +67,12 @@ const colors = [
 ];
 
 export default Vue.extend({
-  name: "HelloWorld",
+  name: "Chart",
   data: (): BaseData => {
     return {
       baseline: null,
       baselineText: "",
       lastD3Event: null,
-      msg: "Welcome to Your Vue.js App",
       quotes: [],
       startDate: moment().add(-1, "year"),
       endDate: moment(),
@@ -80,6 +82,7 @@ export default Vue.extend({
       symbolsText: "MSFT",
     };
   },
+  components: {PrimaryButton, SecondaryButton, TextField},
   mounted: function() {
     this.chartQuotes();
     d3.select(window).on(
